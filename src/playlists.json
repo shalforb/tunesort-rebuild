@@ -1,0 +1,19 @@
+{
+  "playlists": [
+    {
+      "id": "1",
+      "name": "Disco Tits",
+      "description": "Mashups & sparkle"
+    },
+    {
+      "id": "2",
+      "name": "Workout Boost",
+      "description": "High tempo jams"
+    },
+    {
+      "id": "3",
+      "name": "Chill Zone",
+      "description": "Low-key, smooth vibes"
+    }
+  ]
+}
