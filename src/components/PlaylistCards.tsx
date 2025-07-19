@@ -1,39 +1,38 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { PlaylistType } from '../types';
 import PlaylistCard from './PlaylistCard';
+import { Card, CardTitle } from './UI/card';
 
 interface PlaylistCardsProps {
   playlists: PlaylistType[];
-  setPlaylists: React.Dispatch<React.SetStateAction<PlaylistType[]>>;
   deletePlaylist: (id: string | number) => void;
+  setPlaylistToDelete: React.Dispatch<
+    React.SetStateAction<PlaylistType | null>
+  >;
+  setShowDeleteModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const PlaylistCards = ({
   playlists,
-  setPlaylists,
   deletePlaylist,
+  setPlaylistToDelete,
+  setShowDeleteModal,
 }: PlaylistCardsProps) => {
-  useEffect(() => {
-    const fetchPlaylists = async () => {
-      const apiUrl = 'http://localhost:8000/playlists';
-      try {
-        const res = await fetch(apiUrl);
-        const data = await res.json();
-        setPlaylists(data);
-      } catch (error) {
-        console.log('Error fetching data', error);
-      }
-    };
-    fetchPlaylists();
-  }, []);
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Card className="p-4 flex-row justify-between cursor-pointer hover:shadow-md hover:p-6 transition-all delay-70 duration-100">
+        <Link to="playlists/all">
+          <CardTitle className="mb-1">All Tracks</CardTitle>
+        </Link>
+      </Card>
       {playlists.map((playlist) => (
         <PlaylistCard
           key={playlist.id}
           playlist={playlist}
           deletePlaylist={deletePlaylist}
+          setPlaylistToDelete={setPlaylistToDelete}
+          setShowDeleteModal={setShowDeleteModal}
         />
       ))}
     </div>

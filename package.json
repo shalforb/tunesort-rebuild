@@ -8,10 +8,12 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "json-server --watch src/playlists.json --port 8000"
+    "server": "json-server --watch src/db.json --port 8000"
   },
   "dependencies": {
+    "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

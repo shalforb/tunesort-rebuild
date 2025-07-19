@@ -1,16 +1,24 @@
 import { useState, useEffect } from 'react';
-import { PlaylistType } from '../types';
-import PlaylistHeader from '../components/PlaylistHeader';
+import { PlaylistType, AppDataProps } from '../types';
+import PlaylistHeader from '../components/HomeHeader';
 import PlaylistCards from '../components/PlaylistCards';
-import PlaylistModal from '../components/PlaylistModal';
+import AddPlaylistModal from '../components/AddPlaylistModal';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 
-const Home = () => {
-  const [showModal, setShowModal] = useState(false);
-  const [playlists, setPlaylists] = useState<PlaylistType[]>([]);
+const Home: React.FC<AppDataProps> = ({
+  playlists,
+  setPlaylists,
+  tracks,
+  setTracks,
+}) => {
+  const [showAddModal, setShowAddModal] = useState(false);
   const [newPlaylist, setNewPlaylist] = useState({ name: '', description: '' });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistType | null>(
+    null
+  );
 
   // Add Playlist
-
   const addPlaylist = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const res = await fetch('http://localhost:8000/playlists', {
@@ -21,7 +29,7 @@ const Home = () => {
     const data = await res.json();
     setPlaylists([...playlists, data]);
     setNewPlaylist({ name: '', description: '' });
-    setShowModal(false);
+    setShowAddModal(false);
   };
 
   //Delete Playlist
@@ -33,20 +41,36 @@ const Home = () => {
     return;
   };
 
+  const handleDeleteConfirmed = async () => {
+    if (!playlistToDelete) return;
+
+    await deletePlaylist(playlistToDelete.id);
+    setPlaylists((prev) => prev.filter((p) => p.id !== playlistToDelete.id));
+    setShowDeleteModal(false);
+    setPlaylistToDelete(null);
+  };
+
   return (
     <div className="p-12 max-w-5xl mx-auto">
-      <PlaylistHeader setShowModal={setShowModal} />
+      <PlaylistHeader setShowAddModal={setShowAddModal} />
       <PlaylistCards
         playlists={playlists}
-        setPlaylists={setPlaylists}
         deletePlaylist={deletePlaylist}
+        setShowDeleteModal={setShowDeleteModal}
+        setPlaylistToDelete={setPlaylistToDelete}
       />
-      <PlaylistModal
-        showModal={showModal}
-        setShowModal={setShowModal}
+      <AddPlaylistModal
+        showAddModal={showAddModal}
+        setShowAddModal={setShowAddModal}
+        setNewPlaylist={setNewPlaylist}
         addPlaylist={addPlaylist}
         newPlaylist={newPlaylist}
-        setNewPlaylist={setNewPlaylist}
+      />
+      <DeleteConfirmModal
+        open={showDeleteModal}
+        onOpenChange={(open) => setShowDeleteModal(open)}
+        playlist={playlistToDelete}
+        onDelete={handleDeleteConfirmed}
       />
     </div>
   );

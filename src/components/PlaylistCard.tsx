@@ -1,25 +1,24 @@
+import { Link } from 'react-router-dom';
 import { FaTrash, FaEye } from 'react-icons/fa';
 import { Card, CardTitle, CardDescription, CardContent } from './UI/card';
 
-const PlaylistCard = ({ playlist, deletePlaylist }: any) => {
+const PlaylistCard = ({
+  playlist,
+  setPlaylistToDelete,
+  setShowDeleteModal,
+}: any) => {
   return (
-    <Card className="p-4 flex-row justify-between cursor-pointer hover:shadow-md hover:bg-primary hover:text-primary-foreground transition-shadow duration-200">
-      <div>
+    <Card className="p-4 flex-row justify-between cursor-pointer hover:shadow-md hover:p-6 transition-all delay-70 duration-100">
+      <Link to={`/playlists/${playlist.id}`}>
         <CardTitle className="mb-1">{playlist.name}</CardTitle>
         <CardDescription>{playlist.description}</CardDescription>
-      </div>
+      </Link>
       <div className="flex items-center space-x-3">
         <button
-          className="text-blue-500 hover:text-blue-600"
-          title="View"
-          onClick={() => console.log('View playlist', playlist.id)}
-        >
-          <FaEye />
-        </button>
-        <button
-          className="text-red-500 hover:text-red-600"
-          title="Delete"
-          onClick={() => deletePlaylist(playlist.id)}
+          onClick={() => {
+            setPlaylistToDelete(playlist);
+            setShowDeleteModal(true);
+          }}
         >
           <FaTrash />
         </button>
