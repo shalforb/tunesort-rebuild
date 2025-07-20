@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { FaEllipsisH, FaEdit, FaTrash, FaMicrophone, FaMusic } from 'react-icons/fa';
 import { TrackType } from '../types';
 
 interface TrackTableProps {
@@ -8,6 +9,8 @@ interface TrackTableProps {
   selectedTrackId?: string | null;
   onTrackClick: (track: TrackType) => void;
   referenceBpm?: number;
+  onEditTrack?: (track: TrackType) => void;
+  onDeleteTrack?: (track: TrackType) => void;
 }
 
 const TrackTable: React.FC<TrackTableProps> = ({
@@ -17,9 +20,13 @@ const TrackTable: React.FC<TrackTableProps> = ({
   selectedTrackId,
   onTrackClick,
   referenceBpm,
+  onEditTrack,
+  onDeleteTrack,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
+  const [showMenuForTrack, setShowMenuForTrack] = useState<string | null>(null);
 
   const getCompatibilityType = (trackBpm: number, referenceBpm: number) => {
     const directMatch = Math.abs(trackBpm - referenceBpm) <= 10;
@@ -30,6 +37,47 @@ const TrackTable: React.FC<TrackTableProps> = ({
     if (doubleMatch) return 'double';
     return null; // Direct matches don't get a label
   };
+
+  const handleMenuClick = (e: React.MouseEvent, trackId: string) => {
+    e.stopPropagation();
+    setShowMenuForTrack(showMenuForTrack === trackId ? null : trackId);
+  };
+
+  const handleEditClick = (e: React.MouseEvent, track: TrackType) => {
+    e.stopPropagation();
+    setShowMenuForTrack(null);
+    onEditTrack?.(track);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, track: TrackType) => {
+    e.stopPropagation();
+    setShowMenuForTrack(null);
+    onDeleteTrack?.(track);
+  };
+
+  const handleSearchAcapella = (e: React.MouseEvent, track: TrackType) => {
+    e.stopPropagation();
+    setShowMenuForTrack(null);
+    const searchQuery = encodeURIComponent(`${track.title} ${track.artist} acapella`);
+    window.open(`https://www.youtube.com/results?search_query=${searchQuery}`, '_blank');
+  };
+
+  const handleSearchInstrumental = (e: React.MouseEvent, track: TrackType) => {
+    e.stopPropagation();
+    setShowMenuForTrack(null);
+    const searchQuery = encodeURIComponent(`${track.title} ${track.artist} instrumental`);
+    window.open(`https://www.youtube.com/results?search_query=${searchQuery}`, '_blank');
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowMenuForTrack(null);
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current || tracks.length === 0) return;
@@ -78,7 +126,9 @@ const TrackTable: React.FC<TrackTableProps> = ({
                   trackRefs.current[track.id] = el;
                 }}
                 onClick={() => onTrackClick(track)}
-                className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
+                onMouseEnter={() => setHoveredTrackId(track.id)}
+                onMouseLeave={() => setHoveredTrackId(null)}
+                className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors relative ${
                   selectedTrackId === track.id ? 'bg-blue-50 border-blue-200' : ''
                 }`}
               >
@@ -96,6 +146,52 @@ const TrackTable: React.FC<TrackTableProps> = ({
                     </span>
                   )}
                 </div>
+                
+                {/* Hover Menu */}
+                {hoveredTrackId === track.id && (
+                  <div className="absolute top-2 right-2">
+                    <button
+                      onClick={(e) => handleMenuClick(e, track.id)}
+                      className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <FaEllipsisH size={14} />
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {showMenuForTrack === track.id && (
+                      <div className="absolute right-0 top-6 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-32">
+                        <button
+                          onClick={(e) => handleEditClick(e, track)}
+                          className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                        >
+                          <FaEdit size={12} />
+                          <span>Edit Track</span>
+                        </button>
+                        <button
+                          onClick={(e) => handleDeleteClick(e, track)}
+                          className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                        >
+                          <FaTrash size={12} />
+                          <span>Delete Track</span>
+                        </button>
+                        <button
+                          onClick={(e) => handleSearchAcapella(e, track)}
+                          className="w-full px-3 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center space-x-2"
+                        >
+                          <FaMicrophone size={12} />
+                          <span>Search Acapella</span>
+                        </button>
+                        <button
+                          onClick={(e) => handleSearchInstrumental(e, track)}
+                          className="w-full px-3 py-2 text-left text-sm text-purple-600 hover:bg-purple-50 flex items-center space-x-2"
+                        >
+                          <FaMusic size={12} />
+                          <span>Search Instrumental</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

@@ -12,7 +12,7 @@ const CamelotSelector: React.FC<CamelotSelectorProps> = ({
   onSelect,
 }) => {
   return (
-    <div className="mb-8">
+    <div>
       <h2 className="text-xl font-bold mb-4 text-foreground text-center">
         Select a Camelot Key
       </h2>

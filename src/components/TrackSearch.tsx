@@ -20,7 +20,7 @@ const TrackSearch: React.FC<TrackSearchProps> = ({
 
   const filteredTracks = useMemo(() => {
     if (!searchQuery.trim()) return [];
-    
+
     const query = searchQuery.toLowerCase();
     return tracks
       .filter(
@@ -36,7 +36,7 @@ const TrackSearch: React.FC<TrackSearchProps> = ({
         const bTitleMatch = b.title.toLowerCase() === query;
         if (aTitleMatch && !bTitleMatch) return -1;
         if (!aTitleMatch && bTitleMatch) return 1;
-        
+
         // Then sort by title
         return a.title.localeCompare(b.title);
       })
@@ -67,7 +67,7 @@ const TrackSearch: React.FC<TrackSearchProps> = ({
             setIsExpanded(true);
           }}
           onFocus={() => setIsExpanded(true)}
-          className="pl-10 pr-10"
+          className="px-10 py-6"
         />
         {searchQuery && (
           <button
@@ -94,11 +94,17 @@ const TrackSearch: React.FC<TrackSearchProps> = ({
                     key={track.id}
                     onClick={() => handleTrackClick(track)}
                     className={`p-3 border-b border-border cursor-pointer hover:bg-accent transition-colors ${
-                      selectedTrackId === track.id ? 'bg-accent border-primary' : ''
+                      selectedTrackId === track.id
+                        ? 'bg-accent border-primary'
+                        : ''
                     }`}
                   >
-                    <div className="font-medium text-foreground">{track.title}</div>
-                    <div className="text-sm text-muted-foreground">{track.artist}</div>
+                    <div className="font-medium text-foreground">
+                      {track.title}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {track.artist}
+                    </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       {track.tempoBpm} BPM • {track.camelotKey}
                     </div>
@@ -125,4 +131,4 @@ const TrackSearch: React.FC<TrackSearchProps> = ({
   );
 };
 
-export default TrackSearch; 
+export default TrackSearch;

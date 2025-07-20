@@ -2,7 +2,7 @@ import { FaArrowLeft } from 'react-icons/fa';
 import { Separator } from './UI/separator';
 import { Link } from 'react-router-dom';
 
-const PlaylistHeader = ({ setShowAddModal, title }: any) => {
+const PlaylistHeader = ({ setShowAddTrackModal, title }: any) => {
   return (
     <>
       <div className="flex items-center justify-between mb-2">
@@ -12,6 +12,13 @@ const PlaylistHeader = ({ setShowAddModal, title }: any) => {
           </Link>
           <h1 className="text-2xl font-bold ml-2">{title}</h1>
         </div>
+        <button
+          onClick={() => setShowAddTrackModal(true)}
+          className="p-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center space-x-2"
+        >
+          <span className="text-lg">+</span>
+          <span>Add Track</span>
+        </button>
       </div>
       <Separator className="my-4" />
     </>
