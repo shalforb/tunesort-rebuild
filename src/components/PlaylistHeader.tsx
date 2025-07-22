@@ -1,8 +1,17 @@
+import { useContext } from 'react';
+import { PlaylistContext } from '@/context/PlaylistContext';
 import { FaArrowLeft } from 'react-icons/fa';
 import { Separator } from './UI/separator';
 import { Link } from 'react-router-dom';
 
-const PlaylistHeader = ({ setShowAddTrackModal, title }: any) => {
+const PlaylistHeader = ({ title }: any) => {
+  const context = useContext(PlaylistContext);
+  if (!context) {
+    throw new Error('PlaylistContext must be used within a Provider');
+  }
+
+  const { setShowAddTrackModal } = context;
+
   return (
     <>
       <div className="flex items-center justify-between mb-2">

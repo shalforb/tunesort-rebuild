@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
+import { PlaylistContext } from '@/context/PlaylistContext';
 import { FaSearch, FaTimes } from 'react-icons/fa';
 import { TrackType } from '../types';
 import { Input } from './UI/input';
@@ -6,15 +7,17 @@ import { Card, CardContent } from './UI/card';
 
 interface TrackSearchProps {
   tracks: TrackType[];
-  onTrackSelect: (track: TrackType) => void;
-  selectedTrackId?: string | null;
 }
 
-const TrackSearch: React.FC<TrackSearchProps> = ({
-  tracks,
-  onTrackSelect,
-  selectedTrackId,
-}) => {
+const TrackSearch: React.FC<TrackSearchProps> = ({ tracks }) => {
+  const context = useContext(PlaylistContext);
+
+  if (!context) {
+    throw new Error('TrackTable must be used within a PlaylistProvider');
+  }
+
+  const { selectedTrack, setSelectedTrack } = context;
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -44,7 +47,7 @@ const TrackSearch: React.FC<TrackSearchProps> = ({
   }, [tracks, searchQuery]);
 
   const handleTrackClick = (track: TrackType) => {
-    onTrackSelect(track);
+    setSelectedTrack(track);
     setSearchQuery('');
     setIsExpanded(false);
   };
@@ -94,7 +97,7 @@ const TrackSearch: React.FC<TrackSearchProps> = ({
                     key={track.id}
                     onClick={() => handleTrackClick(track)}
                     className={`p-3 border-b border-border cursor-pointer hover:bg-accent transition-colors ${
-                      selectedTrackId === track.id
+                      selectedTrack?.id === track.id
                         ? 'bg-accent border-primary'
                         : ''
                     }`}

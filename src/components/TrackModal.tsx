@@ -6,22 +6,24 @@ import { Label } from './UI/label';
 import { Input } from './UI/input';
 import { PlaylistType, TrackType } from '../types';
 
-interface EditTrackModalProps {
-  showEditModal: boolean;
-  setShowEditModal: (show: boolean) => void;
-  editTrack: (trackData: any) => void;
+interface TrackModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (trackData: any) => void;
+  initialData?: TrackType | null;
   playlists: PlaylistType[];
-  trackToEdit: TrackType | null;
+  mode?: 'add' | 'edit';
 }
 
-const EditTrackModal: React.FC<EditTrackModalProps> = ({
-  showEditModal,
-  setShowEditModal,
-  editTrack,
+const TrackModal: React.FC<TrackModalProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  initialData,
   playlists,
-  trackToEdit,
+  mode = 'add',
 }) => {
-  const [editedTrack, setEditedTrack] = useState({
+  const [trackForm, setTrackForm] = useState({
     title: '',
     artist: '',
     tempoBpm: '',
@@ -30,63 +32,89 @@ const EditTrackModal: React.FC<EditTrackModalProps> = ({
   });
 
   const camelotKeys = [
-    '1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B', '5A', '5B', '6A', '6B',
-    '7A', '7B', '8A', '8B', '9A', '9B', '10A', '10B', '11A', '11B', '12A', '12B'
+    '1A',
+    '1B',
+    '2A',
+    '2B',
+    '3A',
+    '3B',
+    '4A',
+    '4B',
+    '5A',
+    '5B',
+    '6A',
+    '6B',
+    '7A',
+    '7B',
+    '8A',
+    '8B',
+    '9A',
+    '9B',
+    '10A',
+    '10B',
+    '11A',
+    '11B',
+    '12A',
+    '12B',
   ];
 
-  // Pre-populate form when trackToEdit changes
   useEffect(() => {
-    if (trackToEdit) {
-      setEditedTrack({
-        title: trackToEdit.title,
-        artist: trackToEdit.artist,
-        tempoBpm: trackToEdit.tempoBpm.toString(),
-        camelotKey: trackToEdit.camelotKey,
-        playlistId: trackToEdit.playlistId || '',
+    if (initialData) {
+      setTrackForm({
+        title: initialData.title,
+        artist: initialData.artist,
+        tempoBpm: initialData.tempoBpm.toString(),
+        camelotKey: initialData.camelotKey,
+        playlistId: initialData.playlistId || '',
+      });
+    } else {
+      setTrackForm({
+        title: '',
+        artist: '',
+        tempoBpm: '',
+        camelotKey: '',
+        playlistId: '',
       });
     }
-  }, [trackToEdit]);
+  }, [initialData]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!trackToEdit) return;
 
-    const trackData = {
-      ...trackToEdit,
-      ...editedTrack,
-      tempoBpm: parseInt(editedTrack.tempoBpm),
-      playlistId: editedTrack.playlistId || null,
+    const trackData: any = {
+      ...(initialData || { id: crypto.randomUUID() }),
+      ...trackForm,
+      tempoBpm: parseInt(trackForm.tempoBpm),
+      playlistId: trackForm.playlistId || '',
     };
-    
-    editTrack(trackData);
-    setShowEditModal(false);
+
+    onSubmit(trackData);
+    onClose();
   };
 
-  const handleCancel = () => {
-    setShowEditModal(false);
-  };
-
-  if (!showEditModal || !trackToEdit) return null;
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
       <Card className="p-6 shadow-xl w-full max-w-md relative">
         <button
-          onClick={handleCancel}
+          onClick={onClose}
           className="absolute top-3 right-3 text-gray-500 hover:text-red-500"
         >
           <FaTimes size={20} />
         </button>
-        <CardTitle className="text-xl">Edit Track</CardTitle>
+        <CardTitle className="text-xl">
+          {mode === 'edit' ? 'Edit Track' : 'Add New Track'}
+        </CardTitle>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label className="text-sm">Track Title *</Label>
               <Input
                 type="text"
-                value={editedTrack.title}
+                value={trackForm.title}
                 onChange={(e) =>
-                  setEditedTrack({ ...editedTrack, title: e.target.value })
+                  setTrackForm({ ...trackForm, title: e.target.value })
                 }
                 required
                 className="mt-1"
@@ -97,9 +125,9 @@ const EditTrackModal: React.FC<EditTrackModalProps> = ({
               <Label className="text-sm">Artist *</Label>
               <Input
                 type="text"
-                value={editedTrack.artist}
+                value={trackForm.artist}
                 onChange={(e) =>
-                  setEditedTrack({ ...editedTrack, artist: e.target.value })
+                  setTrackForm({ ...trackForm, artist: e.target.value })
                 }
                 required
                 className="mt-1"
@@ -110,9 +138,9 @@ const EditTrackModal: React.FC<EditTrackModalProps> = ({
               <Label className="text-sm">BPM *</Label>
               <Input
                 type="number"
-                value={editedTrack.tempoBpm}
+                value={trackForm.tempoBpm}
                 onChange={(e) =>
-                  setEditedTrack({ ...editedTrack, tempoBpm: e.target.value })
+                  setTrackForm({ ...trackForm, tempoBpm: e.target.value })
                 }
                 required
                 min="1"
@@ -124,9 +152,9 @@ const EditTrackModal: React.FC<EditTrackModalProps> = ({
             <div>
               <Label className="text-sm">Camelot Key *</Label>
               <select
-                value={editedTrack.camelotKey}
+                value={trackForm.camelotKey}
                 onChange={(e) =>
-                  setEditedTrack({ ...editedTrack, camelotKey: e.target.value })
+                  setTrackForm({ ...trackForm, camelotKey: e.target.value })
                 }
                 required
                 className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -142,9 +170,9 @@ const EditTrackModal: React.FC<EditTrackModalProps> = ({
             <div>
               <Label className="text-sm">Playlist</Label>
               <select
-                value={editedTrack.playlistId}
+                value={trackForm.playlistId}
                 onChange={(e) =>
-                  setEditedTrack({ ...editedTrack, playlistId: e.target.value })
+                  setTrackForm({ ...trackForm, playlistId: e.target.value })
                 }
                 className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
@@ -157,11 +185,16 @@ const EditTrackModal: React.FC<EditTrackModalProps> = ({
               </select>
             </div>
             <div className="flex space-x-3">
-              <Button type="button" variant="outline" onClick={handleCancel} className="flex-1">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="flex-1"
+              >
                 Cancel
               </Button>
               <Button type="submit" className="flex-1">
-                Save Changes
+                {mode === 'edit' ? 'Save Changes' : 'Add Track'}
               </Button>
             </div>
           </form>
@@ -171,4 +204,4 @@ const EditTrackModal: React.FC<EditTrackModalProps> = ({
   );
 };
 
-export default EditTrackModal; 
+export default TrackModal;

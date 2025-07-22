@@ -6,9 +6,13 @@ import CamelotSelector from '../components/CamelotSelector';
 import SelectedTrackInfo from '../components/SelectedTrackInfo';
 import TrackTable from '../components/TrackTable';
 import TrackSearch from '../components/TrackSearch';
-import AddTrackModal from '../components/AddTrackModal';
-import EditTrackModal from '../components/EditTrackModal';
+import TrackModal from '../components/TrackModal';
 import { PlaylistContext } from '../context/PlaylistContext';
+import {
+  getCompatibleCamelotKeys,
+  getCompatibleTracks,
+} from '@/lib/trackUtils';
+import { useTrackActions } from '@/hooks/useTrackActions';
 
 const PlaylistPage: React.FC<AppDataProps> = ({
   playlists,
@@ -20,16 +24,22 @@ const PlaylistPage: React.FC<AppDataProps> = ({
   if (!context) {
     throw new Error('useContext must be used within a PlaylistProvider');
   }
-  const { selectedTrack, setSelectedTrack } = context;
+  const {
+    selectedTrack,
+    selectedCamelotKey,
+    showAddTrackModal,
+    setShowAddTrackModal,
+    showEditTrackModal,
+    setShowEditTrackModal,
+    trackToEdit,
+    setTrackToEdit,
+  } = context;
 
   const { id } = useParams();
   const showAllTracks = id === 'all';
   const playlist = playlists.find((p) => String(p.id) === id);
-
-  const [selectedCamelotKey, setSelectedCamelotKey] = useState<string>('');
-  const [showAddTrackModal, setShowAddTrackModal] = useState(false);
-  const [showEditTrackModal, setShowEditTrackModal] = useState(false);
-  const [trackToEdit, setTrackToEdit] = useState<TrackType | null>(null);
+  const { handleAddTrack, handleEditTrackSubmit, handleDeleteTrack } =
+    useTrackActions(setTracks, tracks);
 
   if (!showAllTracks && !playlist) {
     return <div className="p-8 text-destructive">Playlist not found</div>;
@@ -39,151 +49,6 @@ const PlaylistPage: React.FC<AppDataProps> = ({
     ? tracks
     : tracks.filter((track) => track.playlistId === id);
 
-  const camelotOrder = [
-    '1A',
-    '1B',
-    '2A',
-    '2B',
-    '3A',
-    '3B',
-    '4A',
-    '4B',
-    '5A',
-    '5B',
-    '6A',
-    '6B',
-    '7A',
-    '7B',
-    '8A',
-    '8B',
-    '9A',
-    '9B',
-    '10A',
-    '10B',
-    '11A',
-    '11B',
-    '12A',
-    '12B',
-  ];
-
-  const getAdjacentCamelotKeys = (camelotKey: string) => {
-    const number = camelotKey.slice(0, -1);
-    const lowerNum = number === '1' ? '12' : String(parseInt(number) - 1);
-    const higherNum = number === '12' ? '1' : String(parseInt(number) + 1);
-    return {
-      lower: [lowerNum + 'A', lowerNum + 'B'],
-      same: [number + 'A', number + 'B'],
-      higher: [higherNum + 'A', higherNum + 'B'],
-    };
-  };
-
-  const getCompatibleTracks = (targetKeys: string[], referenceBpm: number) => {
-    return playlistTracks
-      .filter((track) => {
-        if (!targetKeys.includes(track.camelotKey)) return false;
-
-        // Check if BPM is within ±10 of reference BPM
-        const directMatch = Math.abs(track.tempoBpm - referenceBpm) <= 10;
-
-        // Check if BPM is within ±10 of half the reference BPM (harmonic mixing)
-        const halfMatch = Math.abs(track.tempoBpm - referenceBpm / 2) <= 10;
-
-        // Check if BPM is within ±10 of double the reference BPM (harmonic mixing)
-        const doubleMatch = Math.abs(track.tempoBpm - referenceBpm * 2) <= 10;
-
-        return directMatch || halfMatch || doubleMatch;
-      })
-      .sort((a, b) => a.tempoBpm - b.tempoBpm);
-  };
-
-  const handleCamelotKeyClick = (camelotKey: string) => {
-    setSelectedCamelotKey(camelotKey);
-    setSelectedTrack(null);
-  };
-
-  const handleTrackClick = (track: TrackType) => {
-    setSelectedTrack(track);
-  };
-
-  const handleSearchTrackSelect = (track: TrackType) => {
-    setSelectedTrack(track);
-    setSelectedCamelotKey(''); // Clear camelot selection when searching
-  };
-
-  const handleAddTrack = async (trackData: any) => {
-    try {
-      const response = await fetch('http://localhost:8000/tracks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(trackData),
-      });
-
-      if (response.ok) {
-        const newTrack = await response.json();
-        setTracks([...tracks, newTrack]);
-      } else {
-        console.error('Failed to add track');
-      }
-    } catch (error) {
-      console.error('Error adding track:', error);
-    }
-  };
-
-  const handleEditTrack = (track: TrackType) => {
-    setTrackToEdit(track);
-    setShowEditTrackModal(true);
-  };
-
-  const handleDeleteTrack = async (track: TrackType) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete "${track.title}" by ${track.artist}?`
-      )
-    ) {
-      try {
-        const response = await fetch(
-          `http://localhost:8000/tracks/${track.id}`,
-          {
-            method: 'DELETE',
-          }
-        );
-
-        if (response.ok) {
-          setTracks(tracks.filter((t) => t.id !== track.id));
-        } else {
-          console.error('Failed to delete track');
-        }
-      } catch (error) {
-        console.error('Error deleting track:', error);
-      }
-    }
-  };
-
-  const handleEditTrackSubmit = async (trackData: any) => {
-    try {
-      const response = await fetch(
-        `http://localhost:8000/tracks/${trackData.id}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(trackData),
-        }
-      );
-
-      if (response.ok) {
-        const updatedTrack = await response.json();
-        setTracks(
-          tracks.map((t) => (t.id === updatedTrack.id ? updatedTrack : t))
-        );
-        setTrackToEdit(null);
-      } else {
-        console.error('Failed to update track');
-      }
-    } catch (error) {
-      console.error('Error updating track:', error);
-    }
-  };
-
   let displayTracks = {
     lower: [] as TrackType[],
     same: [] as TrackType[],
@@ -191,13 +56,17 @@ const PlaylistPage: React.FC<AppDataProps> = ({
   };
 
   if (selectedTrack) {
-    const { lower, same, higher } = getAdjacentCamelotKeys(
+    const { lower, same, higher } = getCompatibleCamelotKeys(
       selectedTrack.camelotKey
     );
     displayTracks = {
-      lower: getCompatibleTracks(lower, selectedTrack.tempoBpm),
-      same: getCompatibleTracks(same, selectedTrack.tempoBpm),
-      higher: getCompatibleTracks(higher, selectedTrack.tempoBpm),
+      lower: getCompatibleTracks(playlistTracks, lower, selectedTrack.tempoBpm),
+      same: getCompatibleTracks(playlistTracks, same, selectedTrack.tempoBpm),
+      higher: getCompatibleTracks(
+        playlistTracks,
+        higher,
+        selectedTrack.tempoBpm
+      ),
     };
   } else if (selectedCamelotKey) {
     displayTracks.same = playlistTracks
@@ -209,27 +78,17 @@ const PlaylistPage: React.FC<AppDataProps> = ({
     <div className="p-8 max-w-7xl mx-auto">
       <PlaylistHeader
         title={showAllTracks ? 'All Tracks' : playlist?.name || ''}
-        setShowAddTrackModal={setShowAddTrackModal}
       />
 
       <div className="flex items-center justify-between mb-8">
         <div className="flex-1">
-          <CamelotSelector
-            camelotOrder={camelotOrder}
-            playlistTracks={playlistTracks}
-            selectedCamelotKey={selectedCamelotKey}
-            onSelect={handleCamelotKeyClick}
-          />
+          <CamelotSelector playlistTracks={playlistTracks} />
         </div>
       </div>
 
       {selectedTrack && <SelectedTrackInfo />}
 
-      <TrackSearch
-        tracks={playlistTracks}
-        onTrackSelect={handleSearchTrackSelect}
-        selectedTrackId={selectedTrack?.id || null}
-      />
+      <TrackSearch tracks={playlistTracks} />
 
       {(selectedTrack || selectedCamelotKey) && (
         <div className="space-y-6">
@@ -238,31 +97,26 @@ const PlaylistPage: React.FC<AppDataProps> = ({
               <TrackTable
                 tracks={displayTracks.lower}
                 title="Lower Adjacent"
-                subtitle="Previous Camelot number"
-                selectedTrackId={null}
-                referenceBpm={selectedTrack.tempoBpm}
-                onTrackClick={handleTrackClick}
-                onEditTrack={handleEditTrack}
-                onDeleteTrack={handleDeleteTrack}
+                subtitle={`Previous Camelot number (${getCompatibleCamelotKeys(
+                  selectedTrack.camelotKey
+                ).lower.join(', ')})`}
+                handleDeleteTrack={handleDeleteTrack}
               />
               <TrackTable
                 tracks={displayTracks.same}
                 title="Same Number"
-                subtitle="Same Camelot number (A/B)"
-                selectedTrackId={selectedTrack.id}
-                onTrackClick={handleTrackClick}
-                onEditTrack={handleEditTrack}
-                onDeleteTrack={handleDeleteTrack}
+                subtitle={`Same Camelot number (${getCompatibleCamelotKeys(
+                  selectedTrack.camelotKey
+                ).same.join(', ')})`}
+                handleDeleteTrack={handleDeleteTrack}
               />
               <TrackTable
                 tracks={displayTracks.higher}
                 title="Higher Adjacent"
-                subtitle="Next Camelot number"
-                selectedTrackId={null}
-                referenceBpm={selectedTrack.tempoBpm}
-                onTrackClick={handleTrackClick}
-                onEditTrack={handleEditTrack}
-                onDeleteTrack={handleDeleteTrack}
+                subtitle={`Next Camelot number (${getCompatibleCamelotKeys(
+                  selectedTrack.camelotKey
+                ).higher.join(', ')})`}
+                handleDeleteTrack={handleDeleteTrack}
               />
             </div>
           ) : (
@@ -271,10 +125,7 @@ const PlaylistPage: React.FC<AppDataProps> = ({
                 tracks={displayTracks.same}
                 title={`Tracks in ${selectedCamelotKey}`}
                 subtitle="Click a track to see compatible mixing options"
-                selectedTrackId={null}
-                onTrackClick={handleTrackClick}
-                onEditTrack={handleEditTrack}
-                onDeleteTrack={handleDeleteTrack}
+                handleDeleteTrack={handleDeleteTrack}
               />
             </div>
           )}
@@ -293,19 +144,21 @@ const PlaylistPage: React.FC<AppDataProps> = ({
         </div>
       )}
 
-      <AddTrackModal
-        showAddModal={showAddTrackModal}
-        setShowAddModal={setShowAddTrackModal}
-        addTrack={handleAddTrack}
+      <TrackModal
+        isOpen={showAddTrackModal}
+        onClose={() => setShowAddTrackModal(false)}
+        onSubmit={handleAddTrack}
         playlists={playlists}
+        mode="add"
       />
 
-      <EditTrackModal
-        showEditModal={showEditTrackModal}
-        setShowEditModal={setShowEditTrackModal}
-        editTrack={handleEditTrackSubmit}
+      <TrackModal
+        isOpen={showEditTrackModal}
+        onClose={() => setShowEditTrackModal(false)}
+        onSubmit={handleEditTrackSubmit}
+        initialData={trackToEdit}
         playlists={playlists}
-        trackToEdit={trackToEdit}
+        mode="edit"
       />
     </div>
   );

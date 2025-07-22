@@ -1,28 +1,36 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { FaEllipsisH, FaEdit, FaTrash, FaMicrophone, FaMusic } from 'react-icons/fa';
+import React, { useEffect, useRef, useState, useContext } from 'react';
+import { PlaylistContext } from '../context/PlaylistContext';
+import {
+  FaEllipsisH,
+  FaEdit,
+  FaTrash,
+  FaMicrophone,
+  FaMusic,
+} from 'react-icons/fa';
 import { TrackType } from '../types';
 
 interface TrackTableProps {
   tracks: TrackType[];
   title: string;
   subtitle?: string;
-  selectedTrackId?: string | null;
-  onTrackClick: (track: TrackType) => void;
-  referenceBpm?: number;
-  onEditTrack?: (track: TrackType) => void;
-  onDeleteTrack?: (track: TrackType) => void;
+  handleDeleteTrack: (track: TrackType) => Promise<void>;
 }
 
 const TrackTable: React.FC<TrackTableProps> = ({
   tracks,
   title,
   subtitle,
-  selectedTrackId,
-  onTrackClick,
-  referenceBpm,
-  onEditTrack,
-  onDeleteTrack,
+  handleDeleteTrack,
 }) => {
+  const context = useContext(PlaylistContext);
+
+  if (!context) {
+    throw new Error('TrackTable must be used within a PlaylistProvider');
+  }
+
+  const { selectedTrack, setSelectedTrack, handleEditTrack } = context;
+
+  const referenceBpm = selectedTrack?.tempoBpm;
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
@@ -32,7 +40,7 @@ const TrackTable: React.FC<TrackTableProps> = ({
     const directMatch = Math.abs(trackBpm - referenceBpm) <= 10;
     const halfMatch = Math.abs(trackBpm - referenceBpm / 2) <= 10;
     const doubleMatch = Math.abs(trackBpm - referenceBpm * 2) <= 10;
-    
+
     if (halfMatch) return 'half';
     if (doubleMatch) return 'double';
     return null; // Direct matches don't get a label
@@ -46,27 +54,37 @@ const TrackTable: React.FC<TrackTableProps> = ({
   const handleEditClick = (e: React.MouseEvent, track: TrackType) => {
     e.stopPropagation();
     setShowMenuForTrack(null);
-    onEditTrack?.(track);
+    handleEditTrack?.(track);
   };
 
   const handleDeleteClick = (e: React.MouseEvent, track: TrackType) => {
     e.stopPropagation();
     setShowMenuForTrack(null);
-    onDeleteTrack?.(track);
+    handleDeleteTrack?.(track);
   };
 
   const handleSearchAcapella = (e: React.MouseEvent, track: TrackType) => {
     e.stopPropagation();
     setShowMenuForTrack(null);
-    const searchQuery = encodeURIComponent(`${track.title} ${track.artist} acapella`);
-    window.open(`https://www.youtube.com/results?search_query=${searchQuery}`, '_blank');
+    const searchQuery = encodeURIComponent(
+      `${track.title} ${track.artist} acapella`
+    );
+    window.open(
+      `https://www.youtube.com/results?search_query=${searchQuery}`,
+      '_blank'
+    );
   };
 
   const handleSearchInstrumental = (e: React.MouseEvent, track: TrackType) => {
     e.stopPropagation();
     setShowMenuForTrack(null);
-    const searchQuery = encodeURIComponent(`${track.title} ${track.artist} instrumental`);
-    window.open(`https://www.youtube.com/results?search_query=${searchQuery}`, '_blank');
+    const searchQuery = encodeURIComponent(
+      `${track.title} ${track.artist} instrumental`
+    );
+    window.open(
+      `https://www.youtube.com/results?search_query=${searchQuery}`,
+      '_blank'
+    );
   };
 
   // Close menu when clicking outside
@@ -84,11 +102,14 @@ const TrackTable: React.FC<TrackTableProps> = ({
 
     let targetTrackId: string | null = null;
 
-    if (selectedTrackId) {
-      // For the same table, scroll to the exact selected track
-      targetTrackId = selectedTrackId;
+    if (
+      selectedTrack?.id &&
+      tracks.some((track) => track.id === selectedTrack.id)
+    ) {
+      // If the selected track is in this table, scroll to it
+      targetTrackId = selectedTrack.id;
     } else if (referenceBpm && tracks.length > 0) {
-      // For adjacent tables, find the track with closest BPM
+      // Otherwise, scroll to the track with closest BPM in this table
       const closestTrack = tracks.reduce((closest, track) => {
         const closestDiff = Math.abs(closest.tempoBpm - referenceBpm);
         const currentDiff = Math.abs(track.tempoBpm - referenceBpm);
@@ -106,7 +127,7 @@ const TrackTable: React.FC<TrackTableProps> = ({
         });
       }
     }
-  }, [tracks, selectedTrackId, referenceBpm]);
+  }, [tracks, selectedTrack?.id, referenceBpm]);
 
   if (tracks.length === 0) return null;
 
@@ -117,19 +138,24 @@ const TrackTable: React.FC<TrackTableProps> = ({
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div ref={containerRef} className="max-h-96 overflow-y-auto">
           {tracks.map((track) => {
-            const compatibilityType = referenceBpm ? getCompatibilityType(track.tempoBpm, referenceBpm) : null;
-            
+            const compatibilityType = referenceBpm
+              ? getCompatibilityType(track.tempoBpm, referenceBpm)
+              : null;
+
             return (
               <div
                 key={track.id}
                 ref={(el) => {
                   trackRefs.current[track.id] = el;
                 }}
-                onClick={() => onTrackClick(track)}
+                onClick={() => setSelectedTrack(track)}
                 onMouseEnter={() => setHoveredTrackId(track.id)}
                 onMouseLeave={() => setHoveredTrackId(null)}
                 className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors relative ${
-                  selectedTrackId === track.id ? 'bg-blue-50 border-blue-200' : ''
+                  selectedTrack?.id === track.id &&
+                  selectedTrack?.camelotKey === track.camelotKey
+                    ? 'bg-blue-50 border-blue-200'
+                    : ''
                 }`}
               >
                 <div className="font-medium text-gray-900">{track.title}</div>
@@ -137,16 +163,18 @@ const TrackTable: React.FC<TrackTableProps> = ({
                 <div className="text-xs text-gray-500 mt-1">
                   {track.tempoBpm} BPM • {track.camelotKey}
                   {compatibilityType && (
-                    <span className={`ml-2 px-2 py-0.5 rounded text-xs ${
-                      compatibilityType === 'half'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-purple-100 text-purple-800'
-                    }`}>
+                    <span
+                      className={`ml-2 px-2 py-0.5 rounded text-xs ${
+                        compatibilityType === 'half'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-purple-100 text-purple-800'
+                      }`}
+                    >
                       {compatibilityType === 'half' ? 'Half BPM' : 'Double BPM'}
                     </span>
                   )}
                 </div>
-                
+
                 {/* Hover Menu */}
                 {hoveredTrackId === track.id && (
                   <div className="absolute top-2 right-2">
@@ -156,7 +184,7 @@ const TrackTable: React.FC<TrackTableProps> = ({
                     >
                       <FaEllipsisH size={14} />
                     </button>
-                    
+
                     {/* Dropdown Menu */}
                     {showMenuForTrack === track.id && (
                       <div className="absolute right-0 top-6 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-32">
