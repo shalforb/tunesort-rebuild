@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import { PlaylistType, TrackType } from './types';
 import Home from './pages/Home';
 import PlaylistPage from './pages/PlaylistPage';
+import { PlaylistProvider } from './context/PlaylistContext';
 
 function App() {
   const apiUrl = 'http://localhost:8000';
@@ -38,30 +39,32 @@ function App() {
   }, []);
 
   return (
-    <Routes>
-      <Route
-        path="/"
-        element={
-          <Home
-            playlists={playlists}
-            setPlaylists={setPlaylists}
-            tracks={tracks}
-            setTracks={setTracks}
-          />
-        }
-      ></Route>
-      <Route
-        path="/playlists/:id"
-        element={
-          <PlaylistPage
-            playlists={playlists}
-            setPlaylists={setPlaylists}
-            tracks={tracks}
-            setTracks={setTracks}
-          />
-        }
-      ></Route>
-    </Routes>
+    <PlaylistProvider>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Home
+              playlists={playlists}
+              setPlaylists={setPlaylists}
+              tracks={tracks}
+              setTracks={setTracks}
+            />
+          }
+        ></Route>
+        <Route
+          path="/playlists/:id"
+          element={
+            <PlaylistPage
+              playlists={playlists}
+              setPlaylists={setPlaylists}
+              tracks={tracks}
+              setTracks={setTracks}
+            />
+          }
+        ></Route>
+      </Routes>
+    </PlaylistProvider>
   );
 }
 

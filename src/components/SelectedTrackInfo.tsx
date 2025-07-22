@@ -1,12 +1,16 @@
-import { TrackType } from '../types';
+import React, { useContext } from 'react';
+import { PlaylistContext } from '../context/PlaylistContext';
 
-interface SelectedTrackInfoProps {
-  selectedTrack: TrackType;
-}
+const SelectedTrackInfo: React.FC = () => {
+  const context = useContext(PlaylistContext);
+  if (!context) {
+    throw new Error('PlaylistContext must be used within a Provider');
+  }
 
-const SelectedTrackInfo: React.FC<SelectedTrackInfoProps> = ({
-  selectedTrack,
-}) => {
+  const { selectedTrack } = context;
+
+  if (!selectedTrack) return null;
+
   return (
     <div className="mb-6 p-4 bg-accent rounded-lg border border-primary">
       <h3 className="font-semibold text-foreground mb-1">Selected Track</h3>
@@ -15,7 +19,8 @@ const SelectedTrackInfo: React.FC<SelectedTrackInfoProps> = ({
       </p>
       <p className="text-sm text-muted-foreground mt-1">
         {selectedTrack.tempoBpm} BPM • {selectedTrack.camelotKey} • Showing
-        compatible tracks within ±10 BPM (including harmonic mixing at half/double BPM)
+        compatible tracks within ±10 BPM (including harmonic mixing at
+        half/double BPM)
       </p>
     </div>
   );

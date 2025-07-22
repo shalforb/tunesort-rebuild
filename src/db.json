@@ -7428,21 +7428,6 @@
       "happiness": 0
     },
     {
-      "id": "t483",
-      "playlistId": "1",
-      "spotifyTrackID": "",
-      "title": "Get it sexyy",
-      "artist": "sexyy red",
-      "albumArtworkUrl": "",
-      "key": "F Minor",
-      "camelotKey": "4A",
-      "tempoBpm": 145,
-      "energy": 0,
-      "liveness": 0,
-      "danceability": 0,
-      "happiness": 0
-    },
-    {
       "id": "t484",
       "playlistId": "1",
       "spotifyTrackID": "",
@@ -26438,6 +26423,38 @@
       "artist": " Post Malone",
       "tempoBpm": 128,
       "camelotKey": "9B",
+      "playlistId": null
+    },
+    {
+      "id": "48db1b04-b285-41c8-970e-864f550aa4ab",
+      "title": "everytime",
+      "artist": "Ariana",
+      "tempoBpm": 148,
+      "camelotKey": "3A",
+      "playlistId": null
+    },
+    {
+      "id": "ceea7464-aea9-4734-93c1-d2f4d2a67e9d",
+      "title": "bad idea",
+      "artist": "ariana grande",
+      "tempoBpm": 138,
+      "camelotKey": "3B",
+      "playlistId": null
+    },
+    {
+      "id": "07521a3c-0ac9-40b7-a7c3-4f56c49f9486",
+      "title": "Manchild",
+      "artist": "Sabrina Carpenter",
+      "tempoBpm": 123,
+      "camelotKey": "9B",
+      "playlistId": null
+    },
+    {
+      "id": "d8ac1b21-43fc-4da5-beb6-f0d38312d423",
+      "title": "Get It Sexyy",
+      "artist": "Sexyy Red",
+      "tempoBpm": 145,
+      "camelotKey": "4A",
       "playlistId": null
     }
   ]

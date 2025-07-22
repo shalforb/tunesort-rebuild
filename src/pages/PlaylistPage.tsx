@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { AppDataProps, TrackType } from '../types';
 import PlaylistHeader from '../components/PlaylistHeader';
 import CamelotSelector from '../components/CamelotSelector';
@@ -8,18 +8,25 @@ import TrackTable from '../components/TrackTable';
 import TrackSearch from '../components/TrackSearch';
 import AddTrackModal from '../components/AddTrackModal';
 import EditTrackModal from '../components/EditTrackModal';
+import { PlaylistContext } from '../context/PlaylistContext';
 
 const PlaylistPage: React.FC<AppDataProps> = ({
   playlists,
   tracks,
   setTracks,
 }) => {
+  const context = useContext(PlaylistContext);
+
+  if (!context) {
+    throw new Error('useContext must be used within a PlaylistProvider');
+  }
+  const { selectedTrack, setSelectedTrack } = context;
+
   const { id } = useParams();
   const showAllTracks = id === 'all';
   const playlist = playlists.find((p) => String(p.id) === id);
 
   const [selectedCamelotKey, setSelectedCamelotKey] = useState<string>('');
-  const [selectedTrack, setSelectedTrack] = useState<TrackType | null>(null);
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
   const [showEditTrackModal, setShowEditTrackModal] = useState(false);
   const [trackToEdit, setTrackToEdit] = useState<TrackType | null>(null);
@@ -128,14 +135,21 @@ const PlaylistPage: React.FC<AppDataProps> = ({
   };
 
   const handleDeleteTrack = async (track: TrackType) => {
-    if (window.confirm(`Are you sure you want to delete "${track.title}" by ${track.artist}?`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${track.title}" by ${track.artist}?`
+      )
+    ) {
       try {
-        const response = await fetch(`http://localhost:8000/tracks/${track.id}`, {
-          method: 'DELETE',
-        });
+        const response = await fetch(
+          `http://localhost:8000/tracks/${track.id}`,
+          {
+            method: 'DELETE',
+          }
+        );
 
         if (response.ok) {
-          setTracks(tracks.filter(t => t.id !== track.id));
+          setTracks(tracks.filter((t) => t.id !== track.id));
         } else {
           console.error('Failed to delete track');
         }
@@ -147,15 +161,20 @@ const PlaylistPage: React.FC<AppDataProps> = ({
 
   const handleEditTrackSubmit = async (trackData: any) => {
     try {
-      const response = await fetch(`http://localhost:8000/tracks/${trackData.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(trackData),
-      });
+      const response = await fetch(
+        `http://localhost:8000/tracks/${trackData.id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(trackData),
+        }
+      );
 
       if (response.ok) {
         const updatedTrack = await response.json();
-        setTracks(tracks.map(t => t.id === updatedTrack.id ? updatedTrack : t));
+        setTracks(
+          tracks.map((t) => (t.id === updatedTrack.id ? updatedTrack : t))
+        );
         setTrackToEdit(null);
       } else {
         console.error('Failed to update track');
@@ -204,7 +223,7 @@ const PlaylistPage: React.FC<AppDataProps> = ({
         </div>
       </div>
 
-      {selectedTrack && <SelectedTrackInfo selectedTrack={selectedTrack} />}
+      {selectedTrack && <SelectedTrackInfo />}
 
       <TrackSearch
         tracks={playlistTracks}
